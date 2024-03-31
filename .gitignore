@@ -1,2 +1,6 @@
-# ignore ALL .class files
+# ignore files
 *.class
+.DS_Store
+.project
+.settings
+target/classes/
