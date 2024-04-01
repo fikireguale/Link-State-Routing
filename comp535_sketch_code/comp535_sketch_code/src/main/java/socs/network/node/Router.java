@@ -8,6 +8,8 @@ import java.io.InputStreamReader;
 
 public class Router {
 
+    CommunicationLayer comm = new CommunicationLayer();
+
   protected LinkStateDatabase lsd;
 
   RouterDescription rd = new RouterDescription();
@@ -49,7 +51,23 @@ public class Router {
    */
   private void processAttach(String processIP, short processPort,
                              String simulatedIP) {
+      int portIdx = ports.length
+      if (portIdx < 4) {
+          RouterDescription r2 = new RouterDescription();
+          r2.processIPAddress = processIP
+          r2.processPort = processPort
+          r2.simulatedIP = simulatedIP
 
+          Link link = new Link(this.rd, r2);
+          port[portIdx] = link;
+
+          SOSPFPacket message = new SOSPFPacket(String srcProcessIP, short srcProcessPort, String srcIP, String dstIP,
+          short sospfType, String routerID, String neighborID);
+
+
+      } else {
+          System.out.println("Routers ports are full");
+      }
   }
 
 
