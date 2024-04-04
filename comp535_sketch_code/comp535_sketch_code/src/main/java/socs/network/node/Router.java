@@ -1,6 +1,7 @@
 package socs.network.node;
 
 import socs.network.util.Configuration;
+import socs.network.message.*;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -8,7 +9,7 @@ import java.io.InputStreamReader;
 
 public class Router {
 
-    CommunicationLayer comm = new CommunicationLayer();
+  CommunicationLayer comm = new CommunicationLayer();
 
   protected LinkStateDatabase lsd;
 
@@ -17,7 +18,7 @@ public class Router {
   //assuming that all routers are with 4 ports
   Link[] ports = new Link[4];
 
-  public Router(Configuration config) {
+  public Router(Configuration config, String routerId) {
     rd.simulatedIPAddress = config.getString("socs.network.router.ip");
     lsd = new LinkStateDatabase(rd);
   }
@@ -51,20 +52,20 @@ public class Router {
    */
   private void processAttach(String processIP, short processPort,
                              String simulatedIP) {
-      int portIdx = ports.length
+      int portIdx = ports.length;
       if (portIdx < 4) {
-          RouterDescription r2 = new RouterDescription();
-          r2.processIPAddress = processIP
-          r2.processPort = processPort
-          r2.simulatedIP = simulatedIP
+          RouterDescription r2 = new RouterDescription(processIP, processPort, simulatedIP, RouterStatus.INIT);
 
           Link link = new Link(this.rd, r2);
-          port[portIdx] = link;
+          ports[portIdx] = link;
 
-          SOSPFPacket message = new SOSPFPacket(String srcProcessIP, short srcProcessPort, String srcIP, String dstIP,
-          short sospfType, String routerID, String neighborID);
-
-
+          SOSPFPacket message = new SOSPFPacket(rd.getProcessIPAddress(), rd.getProcessPortNumber(), rd.getSimulatedIPAddress(), simulatedIP, (short) 0, "router1", rd.getSimulatedIPAddress());
+          try {
+              this.comm.server(link.router2.getProcessPortNumber());
+              this.comm.client(message, link.router2.getProcessIPAddress(), link.router2.getProcessPortNumber(), link.router2.getSimulatedIPAddress());
+          } catch (Exception e) {
+              e.printStackTrace();
+          }
       } else {
           System.out.println("Routers ports are full");
       }

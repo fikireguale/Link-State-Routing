@@ -17,6 +17,8 @@ public class RouterDescription {
         this.status = status;
     }
 
+    public RouterDescription() {}
+
     public String getProcessIPAddress() {
         return processIPAddress;
     }

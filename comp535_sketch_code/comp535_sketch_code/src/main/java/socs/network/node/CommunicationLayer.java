@@ -1,3 +1,7 @@
+package socs.network.node;
+
+import socs.network.message.*;
+import socs.network.util.*;
 
 import java.io.*;
 import java.text.*;
@@ -8,11 +12,9 @@ import java.util.Scanner;
 public class CommunicationLayer extends Thread
 
 {
-    public CommunicationLayer(Link link) {
-        link
-    }
+    public CommunicationLayer() { }
 
-    public static void server() throws IOException
+    public void server(short port) throws IOException
     {
         // server is continuously listening on port for client requests
         ServerSocket ss = new ServerSocket(port);
@@ -22,9 +24,11 @@ public class CommunicationLayer extends Thread
             try
             {
                 s = ss.accept();
-                DataInputStream dis = new DataInputStream(s.getInputStream());
-                DataOutputStream dos = new DataOutputStream(s.getOutputStream());
-                Thread t = new ClientHandler(s, dis, dos);
+
+                ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
+                ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
+
+                Thread t = new ClientHandler(s, ois, oos);
                 t.start();
             }
             catch (Exception e){
@@ -40,26 +44,24 @@ public class CommunicationLayer extends Thread
             InetAddress ip = InetAddress.getByName(processIP);
             Socket s = new Socket(ip, processPort);
 
-            DataInputStream dis = new DataInputStream(s.getInputStream());
-            //DataOutputStream dos = new DataOutputStream(s.getOutputStream());
-
-            //FileOutputStream fos = new FileOutputStream("temp.txt");
+            ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
             ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
 
             while (true)
             {
+
                 oos.writeObject(message);
-                if(tosend.equals("Exit"))
+
+
+                if(message.sospfType == (short) 3)
                 {
                     s.close();
                     break;
                 }
-                String received = dis.readUTF();
-                System.out.println(received);
             }
-            scn.close();
-            dis.close();
-            dos.close();
+            ois.close();
+            oos.close();
+
         }catch(Exception e){
             e.printStackTrace();
         }
@@ -67,49 +69,59 @@ public class CommunicationLayer extends Thread
 
     class ClientHandler extends Thread
     {
-        final DataInputStream dis;
-        final DataOutputStream dos;
+        final ObjectInputStream ois;
+        final ObjectOutputStream oos;
         final Socket s;
 
-        public ClientHandler(Socket s, DataInputStream dis, DataOutputStream dos)
+        public ClientHandler(Socket s, ObjectInputStream ois, ObjectOutputStream oos)
         {
             this.s = s;
-            this.dis = dis;
-            this.dos = dos;
+            this.ois = ois;
+            this.oos = oos;
         }
 
         @Override
         public void run()
         {
-            String received;
-            String toreturn;
             while (true)
             {
+
                 try {
-                    received = dis.readUTF();
+                    SOSPFPacket received = null;
+                    received = (SOSPFPacket) ois.readObject();
+
                     if(received.equals("Exit")) {
                         this.s.close();
                         break;
                     }
-                    switch (received) {
+                    switch (received.sospfType) {
+                        case 0 :
+                            /*SOSPFPacket toreturn = new SOSPFPacket(me.getProcessIPAddress(),
+                                    me.getProcessPortNumber(), me.getSimulatedIPAddress(), received.simulatedIP,
+                                2, received.routerId, received.getSimulatedIPAddress());
+                            oos.writeObject(toreturn);
+                            */
+                            System.out.println("Received Message 0");
 
-                        case "Hello" :
-                            toreturn = fordate.format(date);
-                            dos.writeUTF(toreturn);
                             break;
-
+                        case 1:
+                            System.out.println("Received Message 1");
+                            break;
+                        case 2:
+                            System.out.println("Received Message 2");
+                            break;
                         default:
-                            dos.writeUTF("Invalid input");
+                            //oos.writeUTF("Invalid input");
                             break;
                     }
-                } catch (IOException e) {
+                } catch (IOException | ClassNotFoundException e) {
                     e.printStackTrace();
                 }
             }
             try
             {
-                this.dis.close();
-                this.dos.close();
+                this.ois.close();
+                this.oos.close();
 
             }catch(IOException e) {
                 e.printStackTrace();

@@ -15,7 +15,7 @@ public class SOSPFPacket implements Serializable {
   public String dstIP;
 
   //common header
-  public short sospfType; //0 - HELLO, 1 - LinkState Update
+  public short sospfType; //0 - HELLO, 1 - LinkState Update, 2 - MessageAsString
   public String routerID;
 
   //used by HELLO message to identify the sender of the message
@@ -43,5 +43,17 @@ public class SOSPFPacket implements Serializable {
   public Vector<LSA> getLsaArray() {
     return lsaArray;
   }
+
+    public void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+    }
+
+    public void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+    }
+
+    public void readObjectNoData() throws ObjectStreamException {
+        throw new ObjectStreamException("Stream data is required for deserialization") {};
+    }
 
 }
