@@ -19,11 +19,13 @@ public class Router {
 
   //assuming that all routers are with 4 ports
   Link[] ports = new Link[4];
+  int portIdx = 0;
 
   public Router(Configuration config) {
     rd.simulatedIPAddress = config.getString("socs.network.router.ip");
     try {
-        rd.processIPAddress = InetAddress.getLocalHost().toString();
+        InetAddress ip = InetAddress.getLocalHost();
+        rd.processIPAddress = ip.getHostAddress();
     } catch (Exception e) {
         e.printStackTrace();
     }
@@ -72,9 +74,8 @@ public class Router {
    */
   private void processAttach(String processIP, short processPort,
                              String simulatedIP) {
-      int portIdx = ports.length;
-      System.out.println(ports);
-      if (portIdx < 4) {
+      this.portIdx++;
+      if (this.portIdx < ports.length) {
           RouterDescription r2 = new RouterDescription(processIP, processPort, simulatedIP, RouterStatus.INIT);
           Link link = new Link(this.rd, r2);
           ports[portIdx] = link;
