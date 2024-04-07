@@ -27,7 +27,7 @@ public class CommunicationLayer extends Thread
 
                 ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
                 ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
-
+                // assign new thread for this client
                 Thread t = new ClientHandler(s, ois, oos);
                 t.start();
             }

@@ -50,4 +50,8 @@ public class RouterDescription {
     public void setStatus(RouterStatus status) {
         this.status = status;
     }
+
+    public String toString() {
+        return "INFORMATION\nPort Number: "+this.processPortNumber+"\nIP Address: "+this.processIPAddress+"\nSimulated IP Address: "+this.simulatedIPAddress+"\n";
+    }
 }

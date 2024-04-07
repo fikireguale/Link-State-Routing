@@ -5,6 +5,8 @@ import socs.network.message.*;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.Random;
+import java.net.InetAddress;
 
 
 public class Router {
@@ -18,9 +20,27 @@ public class Router {
   //assuming that all routers are with 4 ports
   Link[] ports = new Link[4];
 
-  public Router(Configuration config, String routerId) {
+  public Router(Configuration config) {
     rd.simulatedIPAddress = config.getString("socs.network.router.ip");
+    try {
+        rd.processIPAddress = InetAddress.getLocalHost().toString();
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    Random rnd = new Random();
+    int x = 10 + rnd.nextInt(5000);
+    rd.processPortNumber = (short) x; // exclude numbers in ports list
     lsd = new LinkStateDatabase(rd);
+    System.out.println(rd.toString());
+    this.terminal();
+    // start comm layer sevr
+    try {
+        comm.server(rd.processPortNumber);
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    rd.status = RouterStatus.INIT;
+
   }
 
   /**
@@ -53,16 +73,15 @@ public class Router {
   private void processAttach(String processIP, short processPort,
                              String simulatedIP) {
       int portIdx = ports.length;
+      System.out.println(ports);
       if (portIdx < 4) {
           RouterDescription r2 = new RouterDescription(processIP, processPort, simulatedIP, RouterStatus.INIT);
-
           Link link = new Link(this.rd, r2);
           ports[portIdx] = link;
 
-          SOSPFPacket message = new SOSPFPacket(rd.getProcessIPAddress(), rd.getProcessPortNumber(), rd.getSimulatedIPAddress(), simulatedIP, (short) 0, "router1", rd.getSimulatedIPAddress());
+          SOSPFPacket message = new SOSPFPacket(rd.getProcessIPAddress(), rd.getProcessPortNumber(), rd.getSimulatedIPAddress(), simulatedIP, (short) 0, rd.getSimulatedIPAddress(), r2.getSimulatedIPAddress());
           try {
-              this.comm.server(link.router2.getProcessPortNumber());
-              this.comm.client(message, link.router2.getProcessIPAddress(), link.router2.getProcessPortNumber(), link.router2.getSimulatedIPAddress());
+              this.comm.client(message, processIP, processPort, simulatedIP);
           } catch (Exception e) {
               e.printStackTrace();
           }

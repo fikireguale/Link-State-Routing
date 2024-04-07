@@ -56,4 +56,8 @@ public class SOSPFPacket implements Serializable {
         throw new ObjectStreamException("Stream data is required for deserialization") {};
     }
 
+    public String toString() {
+        return this.sospfType+" from "+this.srcIP;
+    }
+
 }
