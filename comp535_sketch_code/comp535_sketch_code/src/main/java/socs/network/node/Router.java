@@ -137,11 +137,11 @@ public class Router {
     try {
       InputStreamReader isReader = new InputStreamReader(System.in);
       BufferedReader br = new BufferedReader(isReader);
-      System.out.print(">> ");
-      String command = br.readLine();
       while (true) {
+          System.out.print(">> ");
+          String command = br.readLine();
     	  
-        if (command.startsWith("detect ")) {
+        if (command.startsWith("detect")) {
           String[] cmdLine = command.split(" ");
           if (cmdLine.length != 2) {
         	  System.out.println("Incorrect number of arguments for detect.");
@@ -149,7 +149,7 @@ public class Router {
           }
           processDetect(cmdLine[1]);
         
-        } else if (command.startsWith("disconnect ")) {
+        } else if (command.startsWith("disconnect")) {
           String[] cmdLine = command.split(" ");
           if (cmdLine.length != 2) {
         	  System.out.println("Incorrect number of arguments for disconnect.");
@@ -161,7 +161,7 @@ public class Router {
           processQuit();
           break;
         
-        } else if (command.startsWith("attach ")) {
+        } else if (command.startsWith("attach")) {
           String[] cmdLine = command.split(" ");
           if (cmdLine.length != 4) {
         	  System.out.println("Incorrect number of arguments for attach.");
@@ -173,7 +173,7 @@ public class Router {
         } else if (command.equals("start")) {
           processStart();
         
-        } else if (command.equals("connect ")) {
+        } else if (command.equals("connect")) {
           String[] cmdLine = command.split(" ");
           if (cmdLine.length != 4) {
         	  System.out.println("Incorrect number of arguments for connect.");
@@ -190,8 +190,6 @@ public class Router {
           //invalid command
         	System.out.println("Invalid command, try again.");
         }
-        System.out.print(">> ");
-        command = br.readLine();
       }
       isReader.close();
       br.close();
