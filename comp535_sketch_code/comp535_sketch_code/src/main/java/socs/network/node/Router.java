@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.Random;
 import java.net.InetAddress;
+//import java.lang.Threads;
 
 
 public class Router {
@@ -33,11 +34,13 @@ public class Router {
     int x = 10 + rnd.nextInt(5000);
     rd.processPortNumber = (short) x; // exclude numbers in ports list
     lsd = new LinkStateDatabase(rd);
-    System.out.println(rd.toString());
-    this.terminal();
-    // start comm layer sevr
+    System.out.print(rd.toString()+">> ");
     try {
-        comm.server(rd.processPortNumber);
+        //Thread server = this.comm.new Server(rd.processPortNumber);
+        //server.run();
+        Thread server = new Thread(this.comm.new Server(rd.processPortNumber));
+        server.start();
+        System.out.println("new thread...");
     } catch (Exception e) {
         e.printStackTrace();
     }
@@ -82,6 +85,7 @@ public class Router {
 
           SOSPFPacket message = new SOSPFPacket(rd.getProcessIPAddress(), rd.getProcessPortNumber(), rd.getSimulatedIPAddress(), simulatedIP, (short) 0, rd.getSimulatedIPAddress(), r2.getSimulatedIPAddress());
           try {
+              System.out.println("before client");
               this.comm.client(message, processIP, processPort, simulatedIP);
           } catch (Exception e) {
               e.printStackTrace();

@@ -14,42 +14,23 @@ public class CommunicationLayer extends Thread
 {
     public CommunicationLayer() { }
 
-    public void server(short port) throws IOException
-    {
-        // server is continuously listening on port for client requests
-        ServerSocket ss = new ServerSocket(port);
-        while (true)
-        {
-            Socket s = null;
-            try
-            {
-                s = ss.accept();
-
-                ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
-                ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
-                // assign new thread for this client
-                Thread t = new ClientHandler(s, ois, oos);
-                t.start();
-            }
-            catch (Exception e){
-                s.close();
-                e.printStackTrace();
-            }
-        }
-    }
     public static void client(SOSPFPacket message, String processIP, short processPort, String simulatedIP) throws IOException
     {
         try
         {
+            System.out.println("here");
             InetAddress ip = InetAddress.getByName(processIP);
             Socket s = new Socket(ip, processPort);
 
             ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
             ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
+            System.out.println(ois);
+            System.out.println(oos);
 
             while (true)
             {
-
+                // sending this message
+                System.out.println(message.toString());
                 oos.writeObject(message);
 
 
@@ -120,10 +101,40 @@ public class CommunicationLayer extends Thread
             }
             try
             {
+                this.s.close();
                 this.ois.close();
                 this.oos.close();
 
             }catch(IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    class Server implements Runnable{
+        short port;
+
+        public Server(short aPort) {
+            this.port = aPort;
+        }
+
+        public void run()
+        {
+            Socket s = null;
+            try {
+                // server is continuously listening on port for client requests
+                ServerSocket ss = new ServerSocket(this.port);
+                while (true) {
+                    s = ss.accept();
+
+                    ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
+                    ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
+                    // assign new thread for this client
+                    Thread t = new ClientHandler(s, ois, oos);
+                    t.start();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
