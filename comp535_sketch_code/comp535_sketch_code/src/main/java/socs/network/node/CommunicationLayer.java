@@ -14,31 +14,28 @@ public class CommunicationLayer extends Thread
 {
     public CommunicationLayer() { }
 
-    public static void client(SOSPFPacket message, String processIP, short processPort, String simulatedIP) throws IOException
+    public static void client(SOSPFPacket message, String processIP, short processPort, String simulatedIP, int retries) throws IOException
     {
         try
         {
-            System.out.println("here");
             InetAddress ip = InetAddress.getByName(processIP);
             Socket s = new Socket(ip, processPort);
 
-            ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
             ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
-            System.out.println(ois);
-            System.out.println(oos);
-
-            while (true)
+            ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
+            int count = 0;
+            while (count < retries)
             {
-                // sending this message
-                System.out.println(message.toString());
+                count++;
                 oos.writeObject(message);
-
+                System.out.println("Sent "+message.toString()+" to "+simulatedIP);
 
                 if(message.sospfType == (short) 3)
                 {
                     s.close();
                     break;
                 }
+
             }
             ois.close();
             oos.close();
@@ -76,14 +73,13 @@ public class CommunicationLayer extends Thread
                         break;
                     }
                     switch (received.sospfType) {
-                        case 0 :
+                        case 0:
                             /*SOSPFPacket toreturn = new SOSPFPacket(me.getProcessIPAddress(),
                                     me.getProcessPortNumber(), me.getSimulatedIPAddress(), received.simulatedIP,
                                 2, received.routerId, received.getSimulatedIPAddress());
                             oos.writeObject(toreturn);
                             */
-                            System.out.println("Received Message 0");
-
+                            System.out.print("\n Received "+received.toString()+"\n>> ");
                             break;
                         case 1:
                             System.out.println("Received Message 1");
@@ -95,6 +91,8 @@ public class CommunicationLayer extends Thread
                             //oos.writeUTF("Invalid input");
                             break;
                     }
+                } catch (EOFException e) { // Supposed to happen
+                    break;
                 } catch (IOException | ClassNotFoundException e) {
                     e.printStackTrace();
                 }
@@ -125,7 +123,6 @@ public class CommunicationLayer extends Thread
                 ServerSocket ss = new ServerSocket(this.port);
                 while (true) {
                     s = ss.accept();
-
                     ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
                     ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
                     // assign new thread for this client

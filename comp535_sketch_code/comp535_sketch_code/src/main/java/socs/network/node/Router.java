@@ -34,13 +34,10 @@ public class Router {
     int x = 10 + rnd.nextInt(5000);
     rd.processPortNumber = (short) x; // exclude numbers in ports list
     lsd = new LinkStateDatabase(rd);
-    System.out.print(rd.toString()+">> ");
+    System.out.print(rd.toString());
     try {
-        //Thread server = this.comm.new Server(rd.processPortNumber);
-        //server.run();
         Thread server = new Thread(this.comm.new Server(rd.processPortNumber));
         server.start();
-        System.out.println("new thread...");
     } catch (Exception e) {
         e.printStackTrace();
     }
@@ -85,8 +82,7 @@ public class Router {
 
           SOSPFPacket message = new SOSPFPacket(rd.getProcessIPAddress(), rd.getProcessPortNumber(), rd.getSimulatedIPAddress(), simulatedIP, (short) 0, rd.getSimulatedIPAddress(), r2.getSimulatedIPAddress());
           try {
-              System.out.println("before client");
-              this.comm.client(message, processIP, processPort, simulatedIP);
+              this.comm.client(message, processIP, processPort, simulatedIP, 1);
           } catch (Exception e) {
               e.printStackTrace();
           }
