@@ -148,6 +148,7 @@ public class Router {
           processDisconnect(Short.parseShort(cmdLine[1]));
         } else if (command.startsWith("quit")) {
           processQuit();
+          break;
         } else if (command.startsWith("attach ")) {
           String[] cmdLine = command.split(" ");
           processAttach(cmdLine[1], Short.parseShort(cmdLine[2]),
@@ -163,7 +164,7 @@ public class Router {
           processNeighbors();
         } else {
           //invalid command
-          break;
+        	System.out.println("Invalid command, try again.");
         }
         System.out.print(">> ");
         command = br.readLine();

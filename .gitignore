@@ -3,6 +3,6 @@
 .DS_Store
 .project
 .settings
-target/classes/
-comp535_sketch_code/.classpath
-comp535_sketch_code/target/
+
+/comp535_sketch_code/comp535_sketch_code/target/
+/comp535_sketch_code/comp535_sketch_code/out/
