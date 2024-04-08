@@ -140,28 +140,52 @@ public class Router {
       System.out.print(">> ");
       String command = br.readLine();
       while (true) {
+    	  
         if (command.startsWith("detect ")) {
           String[] cmdLine = command.split(" ");
+          if (cmdLine.length != 2) {
+        	  System.out.println("Incorrect number of arguments for detect.");
+        	  continue;
+          }
           processDetect(cmdLine[1]);
+        
         } else if (command.startsWith("disconnect ")) {
           String[] cmdLine = command.split(" ");
+          if (cmdLine.length != 2) {
+        	  System.out.println("Incorrect number of arguments for disconnect.");
+        	  continue;
+          }
           processDisconnect(Short.parseShort(cmdLine[1]));
+        
         } else if (command.startsWith("quit")) {
           processQuit();
           break;
+        
         } else if (command.startsWith("attach ")) {
           String[] cmdLine = command.split(" ");
+          if (cmdLine.length != 4) {
+        	  System.out.println("Incorrect number of arguments for attach.");
+        	  continue;
+          }
           processAttach(cmdLine[1], Short.parseShort(cmdLine[2]),
                   cmdLine[3] );
+        
         } else if (command.equals("start")) {
           processStart();
+        
         } else if (command.equals("connect ")) {
           String[] cmdLine = command.split(" ");
+          if (cmdLine.length != 4) {
+        	  System.out.println("Incorrect number of arguments for connect.");
+        	  continue;
+          }
           processConnect(cmdLine[1], Short.parseShort(cmdLine[2]),
                   cmdLine[3]);
+        
         } else if (command.equals("neighbors")) {
           //output neighbors
           processNeighbors();
+        
         } else {
           //invalid command
         	System.out.println("Invalid command, try again.");
@@ -171,6 +195,7 @@ public class Router {
       }
       isReader.close();
       br.close();
+      System.exit(0);
     } catch (Exception e) {
       e.printStackTrace();
     }
