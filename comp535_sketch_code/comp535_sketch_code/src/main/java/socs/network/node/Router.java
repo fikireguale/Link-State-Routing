@@ -98,14 +98,14 @@ public class Router {
    * The intuition is that if router2 is an unknown/anomaly router, it is always safe to reject the attached request from router2.
    */
   private void requestHandler() {
-
+	  //for bonus points (see ed), can implement this so that a router can reject an untrustworthy attach attempt (i assume untrustworthy would be defined by us)
   }
 
   /**
    * broadcast Hello to neighbors
    */
   private void processStart() {
-
+	  //change router status as per assignment doc describes
   }
 
   /**
@@ -116,21 +116,24 @@ public class Router {
    */
   private void processConnect(String processIP, short processPort,
                               String simulatedIP) {
-
+	  processAttach(processIP, processPort, simulatedIP);
+	  processStart(); //should trigger database sync
   }
 
   /**
    * output the neighbors of the routers
    */
   private void processNeighbors() {
-
+	  //might be useful to have this return a list of neighbours instead of void, and leave the outputting/handling to the caller
   }
 
   /**
    * disconnect with all neighbors and quit the program
    */
   private void processQuit() {
-
+	  //get all neighbours
+	  //call disconnect on all neighbours, update database(s)
+	  //quitting the terminal is handled by breaking from the terminal loop
   }
 
   public void terminal() {
@@ -194,6 +197,7 @@ public class Router {
       isReader.close();
       br.close();
       System.exit(0);
+    
     } catch (Exception e) {
       e.printStackTrace();
     }
