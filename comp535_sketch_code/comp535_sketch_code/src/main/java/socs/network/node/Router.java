@@ -116,6 +116,7 @@ public class Router {
    */
   private void processConnect(String processIP, short processPort,
                               String simulatedIP) {
+	  //if i understand correctly the other router must already be started, but idk, will work on it later today
 	  processAttach(processIP, processPort, simulatedIP);
 	  processStart(); //should trigger database sync
   }
