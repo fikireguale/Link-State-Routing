@@ -4,6 +4,7 @@ import socs.network.util.Configuration;
 import socs.network.message.*;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Random;
 import java.net.InetAddress;
@@ -36,7 +37,7 @@ public class Router {
     lsd = new LinkStateDatabase(rd);
     System.out.print(rd.toString());
     try {
-        Thread server = new Thread(this.comm.new Server(rd.processPortNumber));
+        Thread server = new Thread(this.comm.new Server(rd.processPortNumber, this));
         server.start();
     } catch (Exception e) {
         e.printStackTrace();
@@ -74,16 +75,14 @@ public class Router {
    */
   private void processAttach(String processIP, short processPort,
                              String simulatedIP) {
-      this.portIdx++;
-      if (this.portIdx < ports.length) {
-          RouterDescription r2 = new RouterDescription(processIP, processPort, simulatedIP, RouterStatus.INIT);
-          Link link = new Link(this.rd, r2);
-          ports[portIdx] = link;
-
-          SOSPFPacket message = new SOSPFPacket(rd.getProcessIPAddress(), rd.getProcessPortNumber(), rd.getSimulatedIPAddress(), simulatedIP, (short) 0, rd.getSimulatedIPAddress(), r2.getSimulatedIPAddress());
+      
+      if (this.portIdx < ports.length - 1) {
+          SOSPFPacket message = new SOSPFPacket(rd.getProcessIPAddress(), rd.getProcessPortNumber(), rd.getSimulatedIPAddress(), simulatedIP, (short) 0, rd.getSimulatedIPAddress(), simulatedIP);
+         
           try {
-              this.comm.client(message, processIP, processPort, simulatedIP, 1);
+              CommunicationLayer.client(message, processIP, processPort, simulatedIP, 1);
           } catch (Exception e) {
+        	  System.out.println("Error connecting to remote router. See error below:");
               e.printStackTrace();
           }
       } else {
@@ -106,6 +105,18 @@ public class Router {
    */
   private void processStart() {
 	  //change router status as per assignment doc describes
+	  for (Link link : ports) {
+		  if (link != null && link.router2.status == RouterStatus.ATTACHED) { //only attempt to shake hands with attached routers, no need for those already on TwoWay connections
+			  link.router2.status = RouterStatus.INIT;
+			  SOSPFPacket message = new SOSPFPacket(rd.getProcessIPAddress(), rd.getProcessPortNumber(), rd.getSimulatedIPAddress(), link.router2.simulatedIPAddress, (short) 0, rd.getSimulatedIPAddress(), link.router2.simulatedIPAddress);
+			  try {
+				  CommunicationLayer.client(message, link.router2.processIPAddress, link.router2.processPortNumber, link.router2.simulatedIPAddress, 1);
+			  } catch (IOException e) {
+				  // TODO Auto-generated catch block
+				  e.printStackTrace();
+			  }
+		  }
+	  }
   }
 
   /**
@@ -118,6 +129,12 @@ public class Router {
                               String simulatedIP) {
 	  //if i understand correctly the other router must already be started, but idk, will work on it later today
 	  processAttach(processIP, processPort, simulatedIP);
+	  try {
+		Thread.sleep(100);
+	} catch (InterruptedException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
 	  processStart(); //should trigger database sync
   }
 
@@ -126,6 +143,13 @@ public class Router {
    */
   private void processNeighbors() {
 	  //might be useful to have this return a list of neighbours instead of void, and leave the outputting/handling to the caller
+	  for (Link link : ports) {
+		  if (link != null && link.router2.status == RouterStatus.TWO_WAY) {
+			  System.out.println();
+			  System.out.print(link.router2.toString());
+		  }
+	  }
+	  System.out.println();
   }
 
   /**
@@ -177,7 +201,7 @@ public class Router {
         } else if (command.equals("start")) {
           processStart();
         
-        } else if (command.equals("connect")) {
+        } else if (command.startsWith("connect")) {
           String[] cmdLine = command.split(" ");
           if (cmdLine.length != 4) {
         	  System.out.println("Incorrect number of arguments for connect.");

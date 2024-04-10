@@ -52,6 +52,6 @@ public class RouterDescription {
     }
 
     public String toString() {
-        return "INFORMATION\nPort Number: "+this.processPortNumber+"\nIP Address: "+this.processIPAddress+"\nSimulated IP Address: "+this.simulatedIPAddress+"\n";
+        return "INFORMATION\nPort Number: "+this.processPortNumber+"\nIP Address: "+this.processIPAddress+"\nSimulated IP Address: "+this.simulatedIPAddress+"\n"+"Status:"+this.status+"\n";
     }
 }
