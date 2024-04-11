@@ -136,6 +136,7 @@ public class CommunicationLayer extends Thread
                         	for (int i = 0; i < router.ports.length; i++) {
                         		if (router.ports[i] != null && router.ports[i].router2.simulatedIPAddress.equals(received.srcIP)) {
                         			router.ports[i] = null; //remove link to src router
+                        			router.portIdx--;
                         			//perform lsa update for this router
                         			break;
                         		}
