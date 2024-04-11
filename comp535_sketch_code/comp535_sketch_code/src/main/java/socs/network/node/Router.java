@@ -70,6 +70,7 @@ public class Router {
 		  System.out.println("No link on desired port to disconnect.");
 	  else {
 		  Link link = ports[portNumber]; //get link data
+		  portIdx--;
 		  ports[portNumber] = null; //remove link data from port
 		  //notify r2 of link to disconnect
 		  //do lsa update somewhere
