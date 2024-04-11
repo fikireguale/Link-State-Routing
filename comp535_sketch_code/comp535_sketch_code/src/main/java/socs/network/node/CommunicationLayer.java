@@ -56,11 +56,8 @@ public class CommunicationLayer extends Thread
         }
 
         @Override
-        public void run()
-        {
-            while (true)
-            {
-
+        public void run() {
+            while (true) {
                 try {
                     SOSPFPacket received = null;
                     received = (SOSPFPacket) ois.readObject();
@@ -119,9 +116,7 @@ public class CommunicationLayer extends Thread
 	                          	  		break;
 	                    			}
 	                        	}
-                        	}
-                            //System.out.print("Received "+received.toString()+"\n>> ");
-                            break;
+                        	} break;
                         case 1:
                             System.out.println("Received Message 1");
                             break;
@@ -129,7 +124,6 @@ public class CommunicationLayer extends Thread
                             System.out.println("Received Message 2");
                             break;
                         case 3: //used as a confirmation that an attach request was accepted
-                            //System.out.println("Received Message 3");
                 			RouterDescription r2 = new RouterDescription(router.rd.getProcessIPAddress(), received.srcProcessPort, received.srcIP, RouterStatus.ATTACHED);
                 			for (int i = 0; i < router.ports.length; i++) {
                 				if (router.ports[i] == null) {
@@ -137,10 +131,17 @@ public class CommunicationLayer extends Thread
                               	  	router.portIdx++;
                               	  	break;
                 				}
-                			}
-                            break;
+                			} break;
+                        case 4: //used to indicate that the sender is disconnecting the mutual link
+                        	for (int i = 0; i < router.ports.length; i++) {
+                        		if (router.ports[i] != null && router.ports[i].router2.simulatedIPAddress.equals(received.srcIP)) {
+                        			router.ports[i] = null; //remove link to src router
+                        			//perform lsa update for this router
+                        			break;
+                        		}
+                        	} break;
                         default:
-                            //oos.writeUTF("Invalid input");
+                            System.out.println("Unknown message received from router " + received.srcIP);
                             break;
                     }
                 } catch (EOFException e) { // Supposed to happen
@@ -148,18 +149,18 @@ public class CommunicationLayer extends Thread
                 } catch (IOException | ClassNotFoundException e) {
                     e.printStackTrace();
                 }
-            }
-            try
-            {
+            } 
+            try {
                 this.s.close();
                 this.ois.close();
                 this.oos.close();
 
-            }catch(IOException e) {
+            } catch(IOException e) {
                 e.printStackTrace();
             }
         }
     }
+    
     class Server implements Runnable{
         short port;
         Router router;
@@ -169,8 +170,7 @@ public class CommunicationLayer extends Thread
             this.router = router;
         }
 
-        public void run()
-        {
+        public void run() {
             Socket s = null;
             try {
                 // server is continuously listening on port for client requests

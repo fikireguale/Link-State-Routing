@@ -72,7 +72,17 @@ public class Router {
 		  Link link = ports[portNumber]; //get link data
 		  portIdx--;
 		  ports[portNumber] = null; //remove link data from port
+		  RouterDescription r2 = link.router2;
 		  //notify r2 of link to disconnect
+          SOSPFPacket message = new SOSPFPacket(rd.getProcessIPAddress(), rd.getProcessPortNumber(), rd.getSimulatedIPAddress(), r2.simulatedIPAddress, (short) 4, rd.getSimulatedIPAddress(), r2.simulatedIPAddress);
+          
+          try {
+              CommunicationLayer.client(message, r2.processIPAddress, r2.processPortNumber, r2.simulatedIPAddress, 1);
+          } catch (Exception e) {
+        	  System.out.println("Error connecting to remote router. See error below:");
+              e.printStackTrace();
+          }
+          
 		  //do lsa update somewhere
 	  }
   }
