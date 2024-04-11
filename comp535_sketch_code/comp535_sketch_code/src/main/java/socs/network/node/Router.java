@@ -143,6 +143,7 @@ public class Router {
    */
   private void processNeighbors() {
 	  //might be useful to have this return a list of neighbours instead of void, and leave the outputting/handling to the caller
+	  //prints all relevant neighbor info instead of just their ips
 	  for (Link link : ports) {
 		  if (link != null && link.router2.status == RouterStatus.TWO_WAY) {
 			  System.out.println();
@@ -158,6 +159,9 @@ public class Router {
   private void processQuit() {
 	  //get all neighbours
 	  //call disconnect on all neighbours, update database(s)
+	  for (short i = 0; i < ports.length; i++) {
+		  processDisconnect(i); //pretty sure its using the simulated 4 ports id and not the actual port id?
+	  }
 	  //quitting the terminal is handled by breaking from the terminal loop
   }
 
