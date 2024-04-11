@@ -64,7 +64,16 @@ public class Router {
    * @param portNumber the port number which the link attaches at
    */
   private void processDisconnect(short portNumber) {
-
+	  if (portNumber < 0 || portNumber >= ports.length) 
+		  System.out.println("Port number out of range.");
+	  else if (ports[portNumber] == null) 
+		  System.out.println("No link on desired port to disconnect.");
+	  else {
+		  Link link = ports[portNumber]; //get link data
+		  ports[portNumber] = null; //remove link data from port
+		  //notify r2 of link to disconnect
+		  //do lsa update somewhere
+	  }
   }
 
   /**
@@ -160,7 +169,8 @@ public class Router {
 	  //get all neighbours
 	  //call disconnect on all neighbours, update database(s)
 	  for (short i = 0; i < ports.length; i++) {
-		  processDisconnect(i); //pretty sure its using the simulated 4 ports id and not the actual port id?
+		  if (ports[i] != null)
+			  processDisconnect(i); //pretty sure its using the simulated 4 ports id and not the actual port id?
 	  }
 	  //quitting the terminal is handled by breaking from the terminal loop
   }
@@ -168,6 +178,7 @@ public class Router {
   public void terminal() {
     try {
       InputStreamReader isReader = new InputStreamReader(System.in);
+      
       BufferedReader br = new BufferedReader(isReader);
       while (true) {
           System.out.print(">> ");
