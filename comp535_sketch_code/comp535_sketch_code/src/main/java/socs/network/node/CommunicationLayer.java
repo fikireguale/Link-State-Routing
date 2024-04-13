@@ -68,7 +68,7 @@ public class CommunicationLayer extends Thread
                     }
                     switch (received.sospfType) {
                         case 0:
-                            System.out.println("\nreceived HELLO from "+received.srcIP+";");
+                            //System.out.println("\nreceived HELLO from "+received.srcIP+";");
                         	boolean found = false;
                         	// check router ports
                         	// 	if message sender not listed, try and add them as attached and send message 3
@@ -81,7 +81,7 @@ public class CommunicationLayer extends Thread
                         			switch (link.router2.status) {
                         				case INIT: {
                         					link.router2.status = RouterStatus.TWO_WAY;
-                                            System.out.println("set "+received.srcIP+" STATE to TWO_WAY;");
+                                            //System.out.println("set "+received.srcIP+" STATE to TWO_WAY;");
                         					SOSPFPacket message = new SOSPFPacket(router.rd.getProcessIPAddress(), router.rd.getProcessPortNumber(), router.rd.getSimulatedIPAddress(), link.router2.simulatedIPAddress, (short) 0, router.rd.getSimulatedIPAddress(), link.router2.simulatedIPAddress);
                         					try {
                         						CommunicationLayer.client(message, link.router2.processIPAddress, link.router2.processPortNumber, link.router2.simulatedIPAddress, 1);
@@ -95,7 +95,7 @@ public class CommunicationLayer extends Thread
                         				case TWO_WAY: break;
                         				case ATTACHED: {
                         					link.router2.status = RouterStatus.INIT;
-                                            System.out.println("set "+received.srcIP+" STATE to INIT;");
+                                            //System.out.println("set "+received.srcIP+" STATE to INIT;");
                         					SOSPFPacket message = new SOSPFPacket(router.rd.getProcessIPAddress(), router.rd.getProcessPortNumber(), router.rd.getSimulatedIPAddress(), link.router2.simulatedIPAddress, (short) 0, router.rd.getSimulatedIPAddress(), link.router2.simulatedIPAddress);
                         					try {
                         						CommunicationLayer.client(message, link.router2.processIPAddress, link.router2.processPortNumber, link.router2.simulatedIPAddress, 1);
@@ -112,12 +112,13 @@ public class CommunicationLayer extends Thread
                         	if (!found) {//we have never received a hello from this router before. find an open space to try and attach them
 	                        	for (int i = 0; i < router.ports.length; i++ ) {
 	                        		if (router.ports[i] == null) {
-	                    				RouterDescription r2 = new RouterDescription(received.srcProcessIP, received.srcProcessPort, received.srcIP, RouterStatus.ATTACHED);
-	                    				SOSPFPacket message = new SOSPFPacket(router.rd.getProcessIPAddress(), router.rd.getProcessPortNumber(), router.rd.getSimulatedIPAddress(), received.srcIP, (short) 3, router.rd.getSimulatedIPAddress(), r2.getSimulatedIPAddress());
-	                    				CommunicationLayer.client(message, r2.processIPAddress, r2.processPortNumber, r2.simulatedIPAddress, 1);
-                                        System.out.println("Auto accepted the attach request;");
-	                    				router.ports[i] = new Link(router.rd, r2);
-	                          	  		router.portIdx++;
+	                        			if (true) { //supposed to be router.requestHandler(received.srcIP), active bug. replaced so that it at least functions
+	                        				RouterDescription r2 = new RouterDescription(received.srcProcessIP, received.srcProcessPort, received.srcIP, RouterStatus.ATTACHED);
+	                    					SOSPFPacket message = new SOSPFPacket(router.rd.getProcessIPAddress(), router.rd.getProcessPortNumber(), router.rd.getSimulatedIPAddress(), received.srcIP, (short) 3, router.rd.getSimulatedIPAddress(), r2.getSimulatedIPAddress());
+	                    					CommunicationLayer.client(message, r2.processIPAddress, r2.processPortNumber, r2.simulatedIPAddress, 1);
+	                    					router.ports[i] = new Link(router.rd, r2);
+	                          	  			router.portIdx++;
+	                        			}
 	                          	  		break;
 	                    			}
 	                        	}
@@ -160,7 +161,7 @@ public class CommunicationLayer extends Thread
                             }
                             break;
                         case 2:
-                            System.out.println("Received Message 2");
+                            //System.out.println("Received Message 2");
                             break;
                         case 3: //used as a confirmation that an attach request was accepted
                 			RouterDescription r2 = new RouterDescription(router.rd.getProcessIPAddress(), received.srcProcessPort, received.srcIP, RouterStatus.ATTACHED);
@@ -176,6 +177,7 @@ public class CommunicationLayer extends Thread
                         		if (router.ports[i] != null && router.ports[i].router2.simulatedIPAddress.equals(received.srcIP)) {
                         			router.ports[i] = null; //remove link to src router
                         			router.portIdx--;
+                        			System.out.println("Your attach request has been accepted;");
                         			//perform lsa update for this router
                                     router.broadcastLSU(router.newLSA());
                         			break;

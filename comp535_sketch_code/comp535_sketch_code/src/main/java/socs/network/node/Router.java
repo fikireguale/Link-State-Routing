@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Random;
+import java.util.Scanner;
 import java.net.InetAddress;
 import java.util.LinkedList;
 import java.util.Vector;
@@ -14,6 +15,9 @@ import java.lang.Thread;
 
 
 public class Router {
+	boolean request = false;
+	Object lock = new Object();
+	boolean requestResponse = false;
 
   CommunicationLayer comm = new CommunicationLayer();
 
@@ -56,7 +60,7 @@ public class Router {
    * @param destinationIP the ip adderss of the destination simulated router
    */
   private void processDetect(String destinationIP) {
-
+	  
 
   }
 
@@ -104,7 +108,6 @@ public class Router {
          
           try {
               CommunicationLayer.client(message, processIP, processPort, simulatedIP, 1);
-              System.out.println("Your attach request has been accepted;");
           } catch (Exception e) {
         	  System.out.println("Error connecting to remote router. See error below:");
               e.printStackTrace();
@@ -120,8 +123,20 @@ public class Router {
    * For example: when router2 tries to attach router1. Router1 can decide whether it will accept this request. 
    * The intuition is that if router2 is an unknown/anomaly router, it is always safe to reject the attached request from router2.
    */
-  private void requestHandler() {
-	  //for bonus points (see ed), can implement this so that a router can reject an untrustworthy attach attempt (i assume untrustworthy would be defined by us)
+  public boolean requestHandler(String ip) {
+	  
+	  request = true;
+	  System.out.print("Router " + ip + " wishes to attach. Type 'y' to accept: ");
+	  try {
+		synchronized(lock) {
+			lock.wait();
+		}
+	} catch (InterruptedException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+	  
+	  return requestResponse;
   }
 
   /**
@@ -154,9 +169,7 @@ public class Router {
    * <p/>
    * This command does trigger the link database synchronization
    */
-  private void processConnect(String processIP, short processPort,
-                              String simulatedIP) {
-	  //if i understand correctly the other router must already be started, but idk, will work on it later today
+  private void processConnect(String processIP, short processPort, String simulatedIP) {
 	  processAttach(processIP, processPort, simulatedIP);
 	  try {
 		Thread.sleep(100);
@@ -259,8 +272,14 @@ public class Router {
       while (true) {
           System.out.print(">> ");
           String command = br.readLine();
-    	  
-        if (command.startsWith("detect")) {
+          
+          if (request) {
+        	  requestResponse = "y".equals(command.toLowerCase());
+        	  request = false;
+        	  synchronized(lock) {
+      			lock.notify();
+      		}
+          } else if (command.startsWith("detect")) {
           String[] cmdLine = command.split(" ");
           if (cmdLine.length != 2) {
         	  System.out.println("Incorrect number of arguments for detect.");
