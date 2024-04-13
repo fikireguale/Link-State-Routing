@@ -136,21 +136,29 @@ public class CommunicationLayer extends Thread
                             }
                             if (needUpdate) {
                                 int index = getIdx(received.srcIP);
-                                LinkDescription ld = getDescr(newLSA.links);
+
+                                LinkDescription ld = null;
+                                for (LinkDescription ldi : newLSA.links) {
+                                    if (ldi.linkID.equals(router.rd.simulatedIPAddress)) {
+                                        ld = ldi;
+                                    }
+                                }
+
                                 if (index != -1 && ld != null) {
                                     LSA curLSA = router.lsd._store.get(router.rd.simulatedIPAddress);
                                     curLSA.links = createLinks();
                                     router.lsd.add(router.rd.simulatedIPAddress, curLSA);
                                     router.broadcastLSU(curLSA);
-
                                 }
                                 router.lsd.add(received.srcIP, newLSA);
 
-                                // forward the packet to all neighbors
                                 for (int i = 0; i < router.ports.length; i++) {
                                     if (router.ports[i] != null && !router.ports[i].router2.simulatedIPAddress.equals(received.srcIP)) {
-                                        // forward LSAUPDATE packet to its neighbors
-                                        forward(received);
+                                        for (int j = 0; j < router.ports.length; j++) {
+                                            if (router.ports[j] != null) {
+                                                CommunicationLayer.client(received, router.ports[j].router2.processIPAddress, router.ports[j].router2.processPortNumber, router.ports[j].router2.simulatedIPAddress, 1);
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -182,7 +190,6 @@ public class CommunicationLayer extends Thread
                             System.out.println("Unknown message received from router " + received.srcIP);
                             break;
                     }
-                    System.out.print("\n>> ");
                 } catch (EOFException e) { // Supposed to happen
                     break;
                 } catch (IOException | ClassNotFoundException e) {
@@ -204,9 +211,9 @@ public class CommunicationLayer extends Thread
                     return i;
                 }
             }
-            // not found
             return -1;
         }
+        /*
         public LinkDescription getDescr(LinkedList<LinkDescription> list) {
             for (LinkDescription ld : list) {
                 if (ld.linkID.equals(router.rd.simulatedIPAddress)) {
@@ -215,6 +222,7 @@ public class CommunicationLayer extends Thread
             }
             return null;
         }
+        */
         public LinkedList<LinkDescription> createLinks() {
             LinkedList<LinkDescription> newLinks = new LinkedList<LinkDescription>();
             for (int i = 0; i < router.ports.length; i++) {
@@ -226,6 +234,7 @@ public class CommunicationLayer extends Thread
             }
             return newLinks;
         }
+        /*
         @SuppressWarnings("resource")
         public void forward(SOSPFPacket message) throws IOException {
             for (int i = 0; i < router.ports.length; i++) {
@@ -234,6 +243,8 @@ public class CommunicationLayer extends Thread
                 }
             }
         }
+
+         */
     }
 
 
