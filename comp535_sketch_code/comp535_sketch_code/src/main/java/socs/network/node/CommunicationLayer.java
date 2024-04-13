@@ -68,6 +68,7 @@ public class CommunicationLayer extends Thread
                     }
                     switch (received.sospfType) {
                         case 0:
+                            System.out.println("\nreceived HELLO from "+received.srcIP+";");
                         	boolean found = false;
                         	// check router ports
                         	// 	if message sender not listed, try and add them as attached and send message 3
@@ -80,9 +81,13 @@ public class CommunicationLayer extends Thread
                         			switch (link.router2.status) {
                         				case INIT: {
                         					link.router2.status = RouterStatus.TWO_WAY;
+                                            System.out.println("set "+received.srcIP+" STATE to TWO_WAY;");
                         					SOSPFPacket message = new SOSPFPacket(router.rd.getProcessIPAddress(), router.rd.getProcessPortNumber(), router.rd.getSimulatedIPAddress(), link.router2.simulatedIPAddress, (short) 0, router.rd.getSimulatedIPAddress(), link.router2.simulatedIPAddress);
                         					try {
+                                                System.out.println("sending message to r2");
                         						CommunicationLayer.client(message, link.router2.processIPAddress, link.router2.processPortNumber, link.router2.simulatedIPAddress, 1);
+                                                System.out.println("next is brodcast");
+                                                router.broadcastLSU(router.newLSA());
                         					} catch (IOException e) {
                         						// TODO Auto-generated catch block
                         						e.printStackTrace();
@@ -92,6 +97,7 @@ public class CommunicationLayer extends Thread
                         				case TWO_WAY: break;
                         				case ATTACHED: {
                         					link.router2.status = RouterStatus.INIT;
+                                            System.out.println("set "+received.srcIP+" STATE to INIT;");
                         					SOSPFPacket message = new SOSPFPacket(router.rd.getProcessIPAddress(), router.rd.getProcessPortNumber(), router.rd.getSimulatedIPAddress(), link.router2.simulatedIPAddress, (short) 0, router.rd.getSimulatedIPAddress(), link.router2.simulatedIPAddress);
                         					try {
                         						CommunicationLayer.client(message, link.router2.processIPAddress, link.router2.processPortNumber, link.router2.simulatedIPAddress, 1);
@@ -111,6 +117,7 @@ public class CommunicationLayer extends Thread
 	                    				RouterDescription r2 = new RouterDescription(received.srcProcessIP, received.srcProcessPort, received.srcIP, RouterStatus.ATTACHED);
 	                    				SOSPFPacket message = new SOSPFPacket(router.rd.getProcessIPAddress(), router.rd.getProcessPortNumber(), router.rd.getSimulatedIPAddress(), received.srcIP, (short) 3, router.rd.getSimulatedIPAddress(), r2.getSimulatedIPAddress());
 	                    				CommunicationLayer.client(message, r2.processIPAddress, r2.processPortNumber, r2.simulatedIPAddress, 1);
+                                        System.out.println("Auto accepted the attach request;");
 	                    				router.ports[i] = new Link(router.rd, r2);
 	                          	  		router.portIdx++;
 	                          	  		break;
@@ -118,7 +125,50 @@ public class CommunicationLayer extends Thread
 	                        	}
                         	} break;
                         case 1:
-                            System.out.println("Received Message 1");
+                            System.out.println("received LSU;");
+                            // retrive old LSA from the database
+                            LSA oldLSA = router.lsd._store.get(received.srcIP);
+                            // get the most recent lsa sent from client (stored in lsaArray)
+                            LSA newLSA = received.lsaArray.lastElement();
+                            // compare the seqNum, if newLSA has a larger seqNumber then we need to update db
+                            boolean needUpdate = false;
+                            if (oldLSA == null) {
+                                LSA lsa = router.newLSA();
+                                router.broadcastLSU(lsa);
+                                needUpdate = true;
+                            }
+                            if (oldLSA != null && newLSA.lsaSeqNumber > oldLSA.lsaSeqNumber) {
+                                needUpdate = true;
+                            }
+                            if (needUpdate) {
+                                // get where the remote router locates in ports
+                                int index = getIdx(received.srcIP);
+                                // get the corresponding link descriptor of the most recent LSA
+                                LinkDescription ld = getDescr(newLSA.links);
+                                // if both exists then update the information
+                                if (index != -1 && ld != null) {
+                                    // info not equal
+                                    //if (ld.weight != ports[index].weight && ld.weight > 0) {}
+                                    // update LSA
+                                    LSA curLSA = router.lsd._store.get(router.rd.simulatedIPAddress);
+                                    curLSA.links = createLinks();
+                                    router.lsd.add(router.rd.simulatedIPAddress, curLSA);
+                                    // broadcast our current LSA to all neighbors
+                                    router.broadcastLSU(curLSA);
+
+                                }
+                                // put the newLSA to db
+                                router.lsd.add(received.srcIP, newLSA);
+
+                                // forward the packet to all neighbors
+                                for (int i = 0; i < router.ports.length; i++) {
+                                    if (router.ports[i] != null && !router.ports[i].router2.simulatedIPAddress.equals(received.srcIP)) {
+                                        // forward LSAUPDATE packet to its neighbors
+                                        forward(received);
+                                    }
+                                }
+                            }
+
                             break;
                         case 2:
                             System.out.println("Received Message 2");
@@ -138,6 +188,8 @@ public class CommunicationLayer extends Thread
                         			router.ports[i] = null; //remove link to src router
                         			router.portIdx--;
                         			//perform lsa update for this router
+                                    router.broadcastLSU(router.newLSA());
+                                    System.out.println(router.lsd.toString()); // remove
                         			break;
                         		}
                         	} break;
@@ -145,6 +197,7 @@ public class CommunicationLayer extends Thread
                             System.out.println("Unknown message received from router " + received.srcIP);
                             break;
                     }
+                    System.out.print("\n>> ");
                 } catch (EOFException e) { // Supposed to happen
                     break;
                 } catch (IOException | ClassNotFoundException e) {
@@ -160,7 +213,45 @@ public class CommunicationLayer extends Thread
                 e.printStackTrace();
             }
         }
+        public int getIdx(String srcIP) {
+            for (int i = 0; i < router.ports.length; i++) {
+                if (router.ports[i] != null && router.ports[i].router2.simulatedIPAddress.equals(srcIP)) {
+                    return i;
+                }
+            }
+            // not found
+            return -1;
+        }
+        public LinkDescription getDescr(LinkedList<LinkDescription> list) {
+            for (LinkDescription ld : list) {
+                if (ld.linkID.equals(router.rd.simulatedIPAddress)) {
+                    return ld;
+                }
+            }
+            return null;
+        }
+        public LinkedList<LinkDescription> createLinks() {
+            LinkedList<LinkDescription> newLinks = new LinkedList<LinkDescription>();
+            for (int i = 0; i < router.ports.length; i++) {
+                if (router.ports[i] != null && router.ports[i].router2.status != null) { // valid connection
+                    LinkDescription ld = new LinkDescription(router.ports[i].router2.simulatedIPAddress,
+                            router.ports[i].router2.processPortNumber);
+                    newLinks.add(ld);
+                }
+            }
+            return newLinks;
+        }
+        @SuppressWarnings("resource")
+        public void forward(SOSPFPacket message) throws IOException {
+            for (int i = 0; i < router.ports.length; i++) {
+                if (router.ports[i] != null) {
+                    CommunicationLayer.client(message, router.ports[i].router2.processIPAddress, router.ports[i].router2.processPortNumber, router.ports[i].router2.simulatedIPAddress, 1);
+                }
+            }
+        }
     }
+
+
     
     class Server implements Runnable{
         short port;

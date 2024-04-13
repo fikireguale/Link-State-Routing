@@ -8,7 +8,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Random;
 import java.net.InetAddress;
-//import java.lang.Threads;
+import java.util.LinkedList;
+import java.util.Vector;
+import java.lang.Thread;
 
 
 public class Router {
@@ -43,6 +45,7 @@ public class Router {
         e.printStackTrace();
     }
     rd.status = RouterStatus.INIT;
+    System.out.println(this.lsd.toString()); // remove
 
   }
 
@@ -54,6 +57,7 @@ public class Router {
    * @param destinationIP the ip adderss of the destination simulated router
    */
   private void processDetect(String destinationIP) {
+
 
   }
 
@@ -101,6 +105,7 @@ public class Router {
          
           try {
               CommunicationLayer.client(message, processIP, processPort, simulatedIP, 1);
+              System.out.println("Your attach request has been accepted;");
           } catch (Exception e) {
         	  System.out.println("Error connecting to remote router. See error below:");
               e.printStackTrace();
@@ -131,6 +136,12 @@ public class Router {
 			  SOSPFPacket message = new SOSPFPacket(rd.getProcessIPAddress(), rd.getProcessPortNumber(), rd.getSimulatedIPAddress(), link.router2.simulatedIPAddress, (short) 0, rd.getSimulatedIPAddress(), link.router2.simulatedIPAddress);
 			  try {
 				  CommunicationLayer.client(message, link.router2.processIPAddress, link.router2.processPortNumber, link.router2.simulatedIPAddress, 1);
+                  try {
+                      Thread.sleep(1000); // remove
+                  } catch (InterruptedException e) {
+                      Thread.currentThread().interrupt();
+                  }
+                  System.out.println(this.lsd.toString()); // remove
 			  } catch (IOException e) {
 				  // TODO Auto-generated catch block
 				  e.printStackTrace();
@@ -186,7 +197,75 @@ public class Router {
 	  //quitting the terminal is handled by breaking from the terminal loop
   }
 
-  public void terminal() {
+    public LSA newLSA() { // move to LSA w/ rd
+        LSA lsa = new LSA();
+        int num = lsd._store.get(rd.simulatedIPAddress).lsaSeqNumber;
+        lsa.lsaSeqNumber = (num == Integer.MIN_VALUE) ? 0 : num + 1;
+
+        lsa.linkStateID = rd.simulatedIPAddress;
+        lsa.links = new LinkedList<LinkDescription>();
+
+        int i = 0;
+        while (i < ports.length) {
+            if (ports[i] != null && ports[i].router2.status != null) {
+                System.out.println("sim IP: "+this.rd.simulatedIPAddress); // remove
+                System.out.println("ports[i]: "+ports[i]);
+                System.out.println("ports[i].router2.status: "+ports[i].router2.status);
+                LinkDescription ld = new LinkDescription(ports[i].router2.simulatedIPAddress,
+                        ports[i].router2.processPortNumber);
+                System.out.println("hereA");
+                lsa.links.add(ld);
+                System.out.println("hereB");
+            }
+            i++;
+            System.out.println("hereC");
+        }
+        System.out.println("hereD");
+        //lsd._store.put(rd.simulatedIPAddress, lsa);
+        lsd.add(rd.simulatedIPAddress, lsa);
+        System.out.println("end of lsa, returning..");
+        return lsa;
+    }
+
+    public void broadcastLSU(LSA lsaToUpdate) {
+        System.out.println("here1");
+        Vector<LSA> broadcastList = new Vector<LSA>();
+        int index = 0;
+        while (index < ports.length) {
+            System.out.println("here2");
+            if (ports[index] != null) {
+                try {
+                    System.out.println("here3");
+                    SOSPFPacket message = new SOSPFPacket(
+                            rd.getProcessIPAddress(),
+                            rd.getProcessPortNumber(),
+                            rd.getSimulatedIPAddress(),
+                            ports[index].router2.simulatedIPAddress,
+                            (short) 1,
+                            rd.getSimulatedIPAddress(),
+                            ports[index].router2.simulatedIPAddress
+                    );
+                    // Add current LSA to the broadcast list
+                    System.out.println("here4");
+
+                    broadcastList.add(lsaToUpdate);
+                    message.lsaArray = broadcastList;
+                    CommunicationLayer.client(
+                            message,
+                            ports[index].router2.processIPAddress,
+                            ports[index].router2.processPortNumber,
+                            ports[index].router2.simulatedIPAddress,
+                            1
+                    );
+                } catch (Exception exception) {
+                    exception.printStackTrace();
+                }
+            }
+            index++; // Move to the next port
+        }
+    }
+
+    public void terminal() {
     try {
       InputStreamReader isReader = new InputStreamReader(System.in);
       
@@ -240,6 +319,9 @@ public class Router {
           //output neighbors
           processNeighbors();
         
+        } else if (command.equals("print lsd")) {
+            System.out.println(this.lsd.toString()); // remove
+
         } else {
           //invalid command
         	System.out.println("Invalid command, try again.");

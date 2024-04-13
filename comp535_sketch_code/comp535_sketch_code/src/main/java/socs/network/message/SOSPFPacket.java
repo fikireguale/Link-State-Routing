@@ -57,7 +57,7 @@ public class SOSPFPacket implements Serializable {
     }
 
     public String toString() {
-        return this.sospfType+" from "+this.srcIP;
+        return this.sospfType+" from "+this.srcIP+";";
     }
 
 }

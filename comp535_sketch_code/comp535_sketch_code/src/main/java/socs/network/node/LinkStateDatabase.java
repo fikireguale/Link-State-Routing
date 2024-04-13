@@ -38,6 +38,9 @@ public class LinkStateDatabase {
     return lsa;
   }
 
+  public synchronized void add(String simulatedIPAddress, LSA lsa) {
+      _store.put(simulatedIPAddress, lsa);
+  }
 
   public String toString() {
     StringBuilder sb = new StringBuilder();
