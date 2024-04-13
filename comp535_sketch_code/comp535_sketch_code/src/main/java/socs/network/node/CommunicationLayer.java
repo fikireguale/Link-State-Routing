@@ -84,9 +84,7 @@ public class CommunicationLayer extends Thread
                                             System.out.println("set "+received.srcIP+" STATE to TWO_WAY;");
                         					SOSPFPacket message = new SOSPFPacket(router.rd.getProcessIPAddress(), router.rd.getProcessPortNumber(), router.rd.getSimulatedIPAddress(), link.router2.simulatedIPAddress, (short) 0, router.rd.getSimulatedIPAddress(), link.router2.simulatedIPAddress);
                         					try {
-                                                System.out.println("sending message to r2");
                         						CommunicationLayer.client(message, link.router2.processIPAddress, link.router2.processPortNumber, link.router2.simulatedIPAddress, 1);
-                                                System.out.println("next is brodcast");
                                                 router.broadcastLSU(router.newLSA());
                         					} catch (IOException e) {
                         						// TODO Auto-generated catch block
@@ -125,12 +123,8 @@ public class CommunicationLayer extends Thread
 	                        	}
                         	} break;
                         case 1:
-                            System.out.println("received LSU;");
-                            // retrive old LSA from the database
                             LSA oldLSA = router.lsd._store.get(received.srcIP);
-                            // get the most recent lsa sent from client (stored in lsaArray)
                             LSA newLSA = received.lsaArray.lastElement();
-                            // compare the seqNum, if newLSA has a larger seqNumber then we need to update db
                             boolean needUpdate = false;
                             if (oldLSA == null) {
                                 LSA lsa = router.newLSA();
@@ -141,23 +135,15 @@ public class CommunicationLayer extends Thread
                                 needUpdate = true;
                             }
                             if (needUpdate) {
-                                // get where the remote router locates in ports
                                 int index = getIdx(received.srcIP);
-                                // get the corresponding link descriptor of the most recent LSA
                                 LinkDescription ld = getDescr(newLSA.links);
-                                // if both exists then update the information
                                 if (index != -1 && ld != null) {
-                                    // info not equal
-                                    //if (ld.weight != ports[index].weight && ld.weight > 0) {}
-                                    // update LSA
                                     LSA curLSA = router.lsd._store.get(router.rd.simulatedIPAddress);
                                     curLSA.links = createLinks();
                                     router.lsd.add(router.rd.simulatedIPAddress, curLSA);
-                                    // broadcast our current LSA to all neighbors
                                     router.broadcastLSU(curLSA);
 
                                 }
-                                // put the newLSA to db
                                 router.lsd.add(received.srcIP, newLSA);
 
                                 // forward the packet to all neighbors
@@ -189,7 +175,6 @@ public class CommunicationLayer extends Thread
                         			router.portIdx--;
                         			//perform lsa update for this router
                                     router.broadcastLSU(router.newLSA());
-                                    System.out.println(router.lsd.toString()); // remove
                         			break;
                         		}
                         	} break;

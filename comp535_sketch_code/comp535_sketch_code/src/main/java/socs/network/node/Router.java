@@ -45,7 +45,6 @@ public class Router {
         e.printStackTrace();
     }
     rd.status = RouterStatus.INIT;
-    System.out.println(this.lsd.toString()); // remove
 
   }
 
@@ -137,11 +136,10 @@ public class Router {
 			  try {
 				  CommunicationLayer.client(message, link.router2.processIPAddress, link.router2.processPortNumber, link.router2.simulatedIPAddress, 1);
                   try {
-                      Thread.sleep(1000); // remove
+                      Thread.sleep(100); // remove
                   } catch (InterruptedException e) {
                       Thread.currentThread().interrupt();
                   }
-                  System.out.println(this.lsd.toString()); // remove
 			  } catch (IOException e) {
 				  // TODO Auto-generated catch block
 				  e.printStackTrace();
@@ -208,34 +206,23 @@ public class Router {
         int i = 0;
         while (i < ports.length) {
             if (ports[i] != null && ports[i].router2.status != null) {
-                System.out.println("sim IP: "+this.rd.simulatedIPAddress); // remove
-                System.out.println("ports[i]: "+ports[i]);
-                System.out.println("ports[i].router2.status: "+ports[i].router2.status);
                 LinkDescription ld = new LinkDescription(ports[i].router2.simulatedIPAddress,
                         ports[i].router2.processPortNumber);
-                System.out.println("hereA");
                 lsa.links.add(ld);
-                System.out.println("hereB");
             }
             i++;
-            System.out.println("hereC");
         }
-        System.out.println("hereD");
         //lsd._store.put(rd.simulatedIPAddress, lsa);
         lsd.add(rd.simulatedIPAddress, lsa);
-        System.out.println("end of lsa, returning..");
         return lsa;
     }
 
     public void broadcastLSU(LSA lsaToUpdate) {
-        System.out.println("here1");
         Vector<LSA> broadcastList = new Vector<LSA>();
         int index = 0;
         while (index < ports.length) {
-            System.out.println("here2");
             if (ports[index] != null) {
                 try {
-                    System.out.println("here3");
                     SOSPFPacket message = new SOSPFPacket(
                             rd.getProcessIPAddress(),
                             rd.getProcessPortNumber(),
@@ -246,7 +233,6 @@ public class Router {
                             ports[index].router2.simulatedIPAddress
                     );
                     // Add current LSA to the broadcast list
-                    System.out.println("here4");
 
                     broadcastList.add(lsaToUpdate);
                     message.lsaArray = broadcastList;
