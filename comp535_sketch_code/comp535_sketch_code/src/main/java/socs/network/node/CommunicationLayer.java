@@ -123,46 +123,41 @@ public class CommunicationLayer extends Thread
 	                        	}
                         	} break;
                         case 1:
-                            LSA oldLSA = router.lsd._store.get(received.srcIP);
-                            LSA newLSA = received.lsaArray.lastElement();
-                            boolean needUpdate = false;
-                            if (oldLSA == null) {
-                                LSA lsa = router.newLSA();
-                                router.broadcastLSU(lsa);
-                                needUpdate = true;
+                            LSA currLSA = router.lsd._store.get(received.srcIP);
+                            LSA recvLSA = received.lsaArray.lastElement();
+                            boolean update = false;
+                            if (currLSA == null) {
+                                LSA newLSA = router.newLSA();
+                                router.broadcastLSU(newLSA);
+                                update = true;
+                            } else {
+                                update = recvLSA.lsaSeqNumber > currLSA.lsaSeqNumber;
                             }
-                            if (oldLSA != null && newLSA.lsaSeqNumber > oldLSA.lsaSeqNumber) {
-                                needUpdate = true;
-                            }
-                            if (needUpdate) {
-                                int index = getIdx(received.srcIP);
 
-                                LinkDescription ld = null;
-                                for (LinkDescription ldi : newLSA.links) {
-                                    if (ldi.linkID.equals(router.rd.simulatedIPAddress)) {
-                                        ld = ldi;
+                            if (update) {
+                                int idx = getIdx(received.srcIP);
+
+                                LinkDescription linkDesc = null;
+                                for (LinkDescription desc : recvLSA.links) {
+                                    if (desc.linkID.equals(router.rd.simulatedIPAddress)) {
+                                        linkDesc = desc;
                                     }
                                 }
 
-                                if (index != -1 && ld != null) {
-                                    LSA curLSA = router.lsd._store.get(router.rd.simulatedIPAddress);
-                                    curLSA.links = createLinks();
-                                    router.lsd.add(router.rd.simulatedIPAddress, curLSA);
-                                    router.broadcastLSU(curLSA);
+                                if (idx != -1 && linkDesc != null) {
+                                    LSA updLSA = router.lsd._store.get(router.rd.simulatedIPAddress);
+                                    updLSA.links = getLinks();
+                                    router.lsd.add(router.rd.simulatedIPAddress, updLSA);
+                                    router.broadcastLSU(updLSA);
                                 }
-                                router.lsd.add(received.srcIP, newLSA);
+                                router.lsd.add(received.srcIP, recvLSA);
 
                                 for (int i = 0; i < router.ports.length; i++) {
-                                    if (router.ports[i] != null && !router.ports[i].router2.simulatedIPAddress.equals(received.srcIP)) {
-                                        for (int j = 0; j < router.ports.length; j++) {
-                                            if (router.ports[j] != null) {
-                                                CommunicationLayer.client(received, router.ports[j].router2.processIPAddress, router.ports[j].router2.processPortNumber, router.ports[j].router2.simulatedIPAddress, 1);
-                                            }
-                                        }
+                                    if (router.ports[i] != null && router.ports[i].router2.simulatedIPAddress != received.srcIP) {
+                                        CommunicationLayer.client(received, router.ports[i].router2.processIPAddress, router.ports[i].router2.processPortNumber, router.ports[i].router2.simulatedIPAddress, 1);
                                     }
                                 }
                             }
-
                             break;
                         case 2:
                             System.out.println("Received Message 2");
@@ -213,38 +208,21 @@ public class CommunicationLayer extends Thread
             }
             return -1;
         }
-        /*
-        public LinkDescription getDescr(LinkedList<LinkDescription> list) {
-            for (LinkDescription ld : list) {
-                if (ld.linkID.equals(router.rd.simulatedIPAddress)) {
-                    return ld;
+
+        public LinkedList<LinkDescription> getLinks() {
+            LinkedList<LinkDescription> links = new LinkedList<>();
+            int k = 0;
+            while (k < router.ports.length) {
+                if (router.ports[k] != null && router.ports[k].router2.status != null) {
+                    LinkDescription ld = new LinkDescription(router.ports[k].router2.simulatedIPAddress,
+                            router.ports[k].router2.processPortNumber);
+                    links.add(ld);
                 }
+                k++;
             }
-            return null;
-        }
-        */
-        public LinkedList<LinkDescription> createLinks() {
-            LinkedList<LinkDescription> newLinks = new LinkedList<LinkDescription>();
-            for (int i = 0; i < router.ports.length; i++) {
-                if (router.ports[i] != null && router.ports[i].router2.status != null) { // valid connection
-                    LinkDescription ld = new LinkDescription(router.ports[i].router2.simulatedIPAddress,
-                            router.ports[i].router2.processPortNumber);
-                    newLinks.add(ld);
-                }
-            }
-            return newLinks;
-        }
-        /*
-        @SuppressWarnings("resource")
-        public void forward(SOSPFPacket message) throws IOException {
-            for (int i = 0; i < router.ports.length; i++) {
-                if (router.ports[i] != null) {
-                    CommunicationLayer.client(message, router.ports[i].router2.processIPAddress, router.ports[i].router2.processPortNumber, router.ports[i].router2.simulatedIPAddress, 1);
-                }
-            }
+            return links;
         }
 
-         */
     }
 
 
